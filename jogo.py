@@ -2,8 +2,11 @@
 import pygame as pg
 import sys
 import pandas as pd
+import gc
 
 #DEFINES
+
+
 TELA_LARGURA = 960
 TELA_ALTURA = 704
 
@@ -23,19 +26,51 @@ AZUL = (0,100,255)
 LARANJA = (255,100,0)
 AREIA = (255, 247, 193)
 
+PLAYERS_QTD = 3
 
-INI_POS_P1 = (64,360)
-INI_ANG_P1 = -90
-INI_POS_P2 = (896,360)
-INI_ANG_P2 = 90
+#
+INI_POS_P = [
+            (64,360),
+            (896,360),
+            (480,64)
+            ]
 
+INI_ANG_P = [
+            -90, 
+            90,
+            180
+            ]
+
+SPRITE_P_PATH = [
+                "sprites/jogador/tanqueJogador1.png", 
+                "sprites/jogador/tanqueJogador2.png", 
+                "sprites/jogador/tanqueJogador2.png"
+                ]
+
+INPUTS_P = [
+            (pg.K_a, pg.K_d, pg.K_w, pg.K_s, pg.K_SPACE), 
+            (pg.K_KP4, pg.K_KP6, pg.K_KP8, pg.K_KP5, pg.K_KP_ENTER),
+            (pg.K_a, pg.K_d, pg.K_w, pg.K_s, pg.K_SPACE)
+            ]
+TEXTO_VITORIA_P = [
+                    'Player 1 Venceu!',
+                    'Player 2 Venceu!',
+                    'Player 3 Venceu!'
+                    ]
+COR_VITORIA_P = [
+                    AZUL,
+                    LARANJA,
+                    BRANCO
+                    ]
+#
 TANQUE_SPRITE_LARGURA = 64
 TANQUE_SPRITE_ALTURA = 64
 TANQUE_PROPORCAO = 0.5
 
 TANQUE_VEL_LIN = 2
 TANQUE_VEL_ANG = 2
-TANQUE_TIRO_QTD = 1
+TANQUE_TIRO_QTD = 2
+TANQUE_TIRO_CD = 1000 #em ms
 
 BALA_SPRITE_LARGURA = 8
 BALA_SPRITE_ALTURA = 16
@@ -45,15 +80,11 @@ BALA_VEL_LIN = 5
 
 BALA_TEMPO_DE_VIDA = 1000 #em ms
 
-SPRITE_P1_PATH = "sprites/jogador/tanqueJogador1.png"
-SPRITE_P2_PATH = "sprites/jogador/tanqueJogador2.png"
 
-INPUTS_P1 = (pg.K_a, pg.K_d, pg.K_w, pg.K_s, pg.K_SPACE)
-INPUTS_P2 = (pg.K_KP4, pg.K_KP6, pg.K_KP8, pg.K_KP5, pg.K_KP_ENTER)
 
 TEXTO_FONTE = 'comicsansms'
-TEXTO_VITORIA_P1 = 'Player 1 Venceu!'
-TEXTO_VITORIA_P2 = 'Player 2 Venceu!'
+
+
 #END
 
 #print(pg.font.get_fonts())
@@ -83,7 +114,7 @@ class Bloco(pg.sprite.Sprite):
 
 class Tanque(pg.sprite.Sprite):
     #                                                                                          (esq|dir|cima|baixo|tiro)
-    def __init__(self, imagem: pg.Surface, iniPos: tuple[int, int], iniAng: int, inputs: tuple[int, int,  int,  int, int]):
+    def __init__(self, imagem: pg.Surface, grupoBalas: pg.sprite.Group, iniPos: tuple[int, int], iniAng: int, inputs: tuple[int, int,  int,  int, int], textoVitoria, corVitoria):
         # Inicializando variaveis
         pg.sprite.Sprite.__init__(self)
         
@@ -100,6 +131,13 @@ class Tanque(pg.sprite.Sprite):
         self.direcao = pg.Vector2((1,0))
         self.pos = pg.Vector2(self.rect.center)
         
+        self.grupoBalas = grupoBalas
+        
+        self.textoVitoria = textoVitoria
+        self.corVitoria = corVitoria
+
+
+
         self.vaiColidirAll = 0
 
         self.vaiColidirD = 0
@@ -191,11 +229,14 @@ class Bala(pg.sprite.Sprite):
 
         self.rect = novoRetangulo
 
+        if pg.time.get_ticks() - self.tempo >= TANQUE_TIRO_CD:
+            self.destroi()
         
 
         # Timer de vida
         if pg.time.get_ticks() - self.tempo >= BALA_TEMPO_DE_VIDA:
-            self.destroi()
+            self.remove(self.groups())
+            
     
     def draw(self, surface: pg.Surface):
         # blit yourself at your current position
@@ -216,14 +257,24 @@ class Jogo(pg.sprite.Sprite):
         self.telaLargura = TELA_LARGURA 
         self.telaAltura =  TELA_ALTURA
         self.textoFont = TEXTO_FONTE
-        self.textoP1 = TEXTO_VITORIA_P1
-        self.textoP2 = TEXTO_VITORIA_P2 
+        
         self.tela = pg.display.set_mode((self.telaLargura, self.telaAltura))
         
         self.grupoSpritesTodos = pg.sprite.Group()
 
-        self.grupoBalasP1 = pg.sprite.Group()
-        self.grupoBalasP2 = pg.sprite.Group()
+        #PLayers
+        self.grupoBalasPlayers: list[pg.sprite.Group] = list()
+        self.tanquePlayers: list[Tanque] = list()
+
+        for i in range(PLAYERS_QTD):
+            gb = pg.sprite.Group()
+            self.grupoBalasPlayers.append(gb)
+
+            imagemP1 = pg.image.load(SPRITE_P_PATH[i])
+            self.tanquePlayers.append(Tanque(imagemP1, gb, INI_POS_P[i], INI_ANG_P[i], INPUTS_P[i], TEXTO_VITORIA_P[i], COR_VITORIA_P[i]))
+            self.grupoSpritesTodos.add(self.tanquePlayers[i])
+
+            
         
         #Contrucao do mapa
         self.grupoMapa = pg.sprite.Group()
@@ -239,96 +290,75 @@ class Jogo(pg.sprite.Sprite):
                     self.grupoMapa.add(bc)
 
 
-        imagemP1 = pg.image.load(SPRITE_P1_PATH)
-        self.tanquePlayer1 = Tanque(imagemP1, INI_POS_P1, INI_ANG_P1, INPUTS_P1)
-        self.grupoSpritesTodos.add(self.tanquePlayer1)
-        
-        imagemP2 = pg.image.load(SPRITE_P2_PATH)
-        self.tanquePlayer2 = Tanque(imagemP2, INI_POS_P2, INI_ANG_P2, INPUTS_P2)
-        self.grupoSpritesTodos.add(self.tanquePlayer2)
-        
-        self.vencendor = 0
+        self.tanquesVivos = PLAYERS_QTD
+
         self.restart = 0
         #bala = Bala(self.tanquePlayer)
         #self.grupoSpritesTodos.add(bala)
         #self.grupoBalas.add(bala)
 
     def trataEventos(self):
-
-        #keys = pg.key.get_pressed()
-        
-
+          
         # Trata eventos dos players
-        if self.tanquePlayer1.alive():
-            self.tanquePlayer1.trataEventos()
-        if self.tanquePlayer2.alive():
-            self.tanquePlayer2.trataEventos()
-        
-        # Trata eventos de teclado e saida
+        for t in self.tanquePlayers:
+            if t.alive():
+                t.trataEventos()
+        # Trata eventos de Dispara balas
         for evento in pg.event.get():
             if evento.type == pg.QUIT:
                 self.rodando = False
+                return
             elif evento.type == pg.KEYDOWN:
                 if evento.key == pg.K_ESCAPE:
                     self.rodando = False
-                #Dispara balas p1
-                if evento.key == self.tanquePlayer1.comandos[4] and self.tanquePlayer1.tiroDisponivel and self.tanquePlayer1.alive():
-                    bullet = Bala(self.tanquePlayer1)
-                    self.grupoBalasP1.add(bullet)
-                    self.grupoSpritesTodos.add(bullet)
-                #Dispara balas p2
-                if evento.key == self.tanquePlayer2.comandos[4] and self.tanquePlayer2.tiroDisponivel and self.tanquePlayer2.alive():
-                    bullet = Bala(self.tanquePlayer2)
-                    self.grupoBalasP2.add(bullet)
-                    self.grupoSpritesTodos.add(bullet)
-                
-                    
+                    return
+                for t in self.tanquePlayers:
+                    if (evento.key == t.comandos[4] and 
+                        t.tiroDisponivel and 
+                        t.alive()  
+                    ):
+                        bala = Bala(t)
+                        t.grupoBalas.add(bala)
+                        self.grupoSpritesTodos.add(bala)
+
         # Trata colisao de balas com balas
         b: Bala
-        for b in self.grupoBalasP1:
-            k: Bala
-            for k in pg.sprite.spritecollide(b, self.grupoBalasP2, True):
-                k.destroi()
-                b.destroi()
-                break
+        k: Bala
+        
+        for g in self.grupoBalasPlayers:
+            for h in self.grupoBalasPlayers:
+                if g == h:
+                    continue
+               
+                for b in g:
+                    for k in pg.sprite.spritecollide(b, h, False):
+                        print("BLING")
+                        k.remove(k.tanque.grupoBalas)
+                        b.remove(b.tanque.grupoBalas)
+                        break
+
         # Trata colisao de balas com paredes
-        for b in self.grupoBalasP1:
-            if pg.sprite.spritecollide(b, self.grupoMapa, False) != []:
-                b.destroi()
-                break
+        for g in self.grupoBalasPlayers:
+            for b in g:
+                if pg.sprite.spritecollide(b, self.grupoMapa, False) != []:
+                    b.remove(b.tanque.grupoBalas)
+                    break
+    
 
-        for b in self.grupoBalasP2:
-            if pg.sprite.spritecollide(b, self.grupoMapa, False) != []:
-                b.destroi()
-                break
+        b: Bala
+        
         # Trata colisao de balas com players
-        #p1
-        if pg.sprite.spritecollide(self.tanquePlayer1, self.grupoBalasP2, False) != [] and self.tanquePlayer1.alive():
+        for t in self.tanquePlayers:
+            for g in self.grupoBalasPlayers:
+                if t.grupoBalas == g:
+                    continue
+                for b in pg.sprite.spritecollide(t, g, False):
+                    b.remove(b.tanque.grupoBalas)
+                    self.tanquePlayers.remove(t)
+                    t.kill()
+                    self.tanquesVivos -= 1
+                    break
     
-            for b in self.grupoBalasP1.sprites():
-                b.destroi()
-            for b in self.grupoBalasP2.sprites():
-                b.destroi()
-    
-            self.tanquePlayer1.kill()
-            self.grupoSpritesTodos.remove(self.tanquePlayer1)
-            
-            self.vencendor = 2
-
-            del(self.tanquePlayer1)
-        #p2
-        if pg.sprite.spritecollide(self.tanquePlayer2, self.grupoBalasP1, False ) != [] and self.tanquePlayer2.alive():        
-            b : Bala
-            for b in self.grupoBalasP1.sprites():
-                b.destroi()
-            for b in self.grupoBalasP2.sprites():
-                b.destroi()
-    
-            self.vencendor = 1
-
-            self.tanquePlayer2.kill()
-            self.grupoSpritesTodos.remove(self.tanquePlayer2)
-            del(self.tanquePlayer2)
 
     def update(self):
         self.grupoSpritesTodos.update()
@@ -336,17 +366,16 @@ class Jogo(pg.sprite.Sprite):
     def draw(self):
         self.tela.fill(AREIA)
         self.grupoMapa.draw(self.tela)  
-        if self.vencendor != 2:
-            self.tanquePlayer1.draw(self.tela)
-        if self.vencendor != 1:
-            self.tanquePlayer2.draw(self.tela)
+        
+        t: Tanque
+        for t in self.tanquePlayers:
+            t.draw(self.tela)
         
         b: Bala
-        for b in self.grupoBalasP1:
-            b.draw(self.tela)
-        for b in self.grupoBalasP2:
-            b.draw(self.tela)
-            #self.grupoSpritesTodos.draw(self.tela)  
+        for t in self.tanquePlayers:
+            for b in t.grupoBalas:
+                b.draw(self.tela)
+        
         pg.display.update()
 
     def trataColisaoParede(self, tanque: Tanque):
@@ -377,9 +406,14 @@ class Jogo(pg.sprite.Sprite):
 
         vaiColH = 0
         vaiColV = 0 
-        for x in range(BLOCO_QTD_V):
-            for y in range(BLOCO_QTD_H):
-                bloco = self.mapa.blocos[x][y]
+
+        rX = range(BLOCO_QTD_H)
+       
+        rY = range(BLOCO_QTD_V)
+       
+        for y in rY:
+            for x in rX:
+                bloco = self.mapa.blocos[y][x]
                 if bloco is not None:
                     BkFaceDir = bloco.rect.x+bloco.rect.w 
                     BkFaceEsq = bloco.rect.x
@@ -398,11 +432,7 @@ class Jogo(pg.sprite.Sprite):
                     
 
                     if(colD and colC):
-                        if absXVel>=absYVel:
-                            tanque.rect.x = bloco.rect.x - tanque.rect.w
-                        else:
-                            tanque.rect.y = bloco.rect.y + bloco.rect.h
-                        
+
                         if not tanque.vaiColidirD:
                             tanque.pos.x -= absXVel/2
                             tanque.vaiColidirD = 1
@@ -413,10 +443,7 @@ class Jogo(pg.sprite.Sprite):
                         
                     
                     if(colD and colB):
-                        if absXVel>=absYVel:
-                            tanque.rect.x = bloco.rect.x - tanque.rect.w 
-                        else:
-                            tanque.rect.y = bloco.rect.y - tanque.rect.h
+
 
                         if not tanque.vaiColidirD:
                             tanque.pos.x -= absXVel/2
@@ -428,10 +455,7 @@ class Jogo(pg.sprite.Sprite):
                         
                     
                     if(colE and colC):
-                        if absXVel>=absYVel:
-                            tanque.rect.x = bloco.rect.x + bloco.rect.w 
-                        else:
-                            tanque.rect.y = bloco.rect.y + bloco.rect.h
+
 
                         if not tanque.vaiColidirE:
                             tanque.pos.x += absXVel/2
@@ -443,11 +467,7 @@ class Jogo(pg.sprite.Sprite):
                             
                     
                     if(colE and colB):    
-                        if absXVel>=absYVel:
-                            tanque.rect.x = bloco.rect.x + bloco.rect.w 
-                        else:
-                            tanque.rect.y = bloco.rect.y - tanque.rect.h
-             
+            
                         
                         if not tanque.vaiColidirE:      
                             tanque.pos.x += absXVel/2
@@ -458,43 +478,66 @@ class Jogo(pg.sprite.Sprite):
                             tanque.vaiColidirB = 1
 
 
+                    #Externas
                     
 
                     if(colEH and colB):
                         tanque.rect.y = bloco.rect.y - tanque.rect.h
                         
-                        if not vaiColH:
+                        if not tanque.vaiColidirB:   
+                            tanque.pos.y -= absYVel/2
+                            tanque.vaiColidirB = 1 
 
+                        if not vaiColH:
                             tanque.pos.y -= absYVel/2
                             vaiColH = 1
+                        
+                        #tanque.vaiColidirB = 1
+
+                        
+                            
+                        
 
                     if(colEH and colC):
                         tanque.rect.y = bloco.rect.y + bloco.rect.h
                         
-                        if not vaiColH:    
-
+                        if not tanque.vaiColidirC:    
                             tanque.pos.y += absYVel/2
-                            vaiColH = 1
+                            tanque.vaiColidirC = 1 
+
+                        if not vaiColH:    
+                                tanque.pos.y += absYVel/2
+                                vaiColH = 1
+                        
+                        #tanque.vaiColidirC = 1
+
+                        
+                            
 
                     if(colEV and colE):
                         tanque.rect.x = bloco.rect.x + bloco.rect.w 
 
-                        if not vaiColV:      
-
+                        if not tanque.vaiColidirE:      
                             tanque.pos.x += absXVel/2
-                            vaiColV = 1
+                            tanque.vaiColidirE = 1
+                        
+                        if not vaiColV:      
+                                tanque.pos.x += absXVel/2
+                                vaiColV = 1
+
 
                     if(colEV and colD):
                         tanque.rect.x = bloco.rect.x - tanque.rect.w 
                         
-                        if not vaiColV:
-
+                        if not tanque.vaiColidirD:
                             tanque.pos.x -= absXVel/2
-                            vaiColV = 1
-                    
-        
-        
-        
+                            tanque.vaiColidirD = 1
+
+                        if not vaiColV:
+                                tanque.pos.x -= absXVel/2
+                                vaiColV = 1
+                        
+                        
         if tanque.vaiColidirB and tanque.vaiColidirC and tanque.vaiColidirE and tanque.vaiColidirD:
             tanque.vaiColidirAll = 1
         
@@ -507,13 +550,10 @@ class Jogo(pg.sprite.Sprite):
         textoVitoriaSombra =  fonte.render('Erro', False, PRETO)
         textoVitoria =  fonte.render('Erro', False, PRETO)
         
-        if self.vencendor == 1:
-            textoVitoriaSombra =  fonte.render(self.textoP1, False, PRETO)
-            textoVitoria = fonte.render(self.textoP1, False, AZUL)
-        if self.vencendor == 2:
-            textoVitoriaSombra =  fonte.render(self.textoP2, False, PRETO)
-            textoVitoria = fonte.render(self.textoP2, False, LARANJA)
-
+        
+        textoVitoriaSombra =  fonte.render(self.tanquePlayers[0].textoVitoria, False, PRETO)
+        textoVitoria = fonte.render(self.tanquePlayers[0].textoVitoria, False, self.tanquePlayers[0].corVitoria)
+        
         meiox = ((self.telaLargura-textoVitoria.get_width())/2)
         meioy = ((self.telaAltura-textoVitoria.get_height())/2)
 
@@ -540,7 +580,7 @@ class Jogo(pg.sprite.Sprite):
             pg.time.Clock().tick(60)
 
         self.rodando = False
-                    
+            
 def main():
     pg.init()
     pg.font.init() 
@@ -557,9 +597,9 @@ def main():
 
         # Loop do jogo
         while jogo.rodando:
-            if jogo.vencendor == 0:
-                jogo.trataColisaoParede(jogo.tanquePlayer1)
-                jogo.trataColisaoParede(jogo.tanquePlayer2)
+            if jogo.tanquesVivos > 1:
+                for t in jogo.tanquePlayers:
+                    jogo.trataColisaoParede(t)
                 jogo.trataEventos()
                 jogo.update()
                 jogo.draw()
@@ -573,6 +613,7 @@ def main():
         # Deleta instancia passada do jogo
         del(jogo)
 
+        gc.collect()
 
 
 if __name__ == '__main__':
