@@ -413,6 +413,8 @@ class Jogo(pg.sprite.Sprite):
        
         for y in rY:
             for x in rX:
+                if tanque.vaiColidirAll:
+                    break
                 bloco = self.mapa.blocos[y][x]
                 if bloco is not None:
                     BkFaceDir = bloco.rect.x+bloco.rect.w 
@@ -428,56 +430,6 @@ class Jogo(pg.sprite.Sprite):
                     colEH = (TkFaceEsq<=BkFaceEsq and TkFaceDir>=BkFaceDir)
                     colEV = (TkFaceCim<=BkFaceCim and TkFaceBai>=BkFaceBai)
                     
-                    
-                    
-
-                    if(colD and colC):
-
-                        if not tanque.vaiColidirD:
-                            tanque.pos.x -= absXVel/2
-                            tanque.vaiColidirD = 1
-
-                        if not tanque.vaiColidirC:    
-                            tanque.pos.y += absYVel/2
-                            tanque.vaiColidirC = 1
-                        
-                    
-                    if(colD and colB):
-
-
-                        if not tanque.vaiColidirD:
-                            tanque.pos.x -= absXVel/2
-                            tanque.vaiColidirD = 1
-                        
-                        if not tanque.vaiColidirB:   
-                            tanque.pos.y -= absYVel/2
-                            tanque.vaiColidirB = 1
-                        
-                    
-                    if(colE and colC):
-
-
-                        if not tanque.vaiColidirE:
-                            tanque.pos.x += absXVel/2
-                            tanque.vaiColidirE = 1
-
-                        if not tanque.vaiColidirC:    
-                            tanque.pos.y += absYVel/2
-                            tanque.vaiColidirC = 1
-                            
-                    
-                    if(colE and colB):    
-            
-                        
-                        if not tanque.vaiColidirE:      
-                            tanque.pos.x += absXVel/2
-                            tanque.vaiColidirE = 1
-
-                        if not tanque.vaiColidirB:   
-                            tanque.pos.y -= absYVel/2
-                            tanque.vaiColidirB = 1
-
-
                     #Externas
                     
 
@@ -536,6 +488,63 @@ class Jogo(pg.sprite.Sprite):
                         if not vaiColV:
                                 tanque.pos.x -= absXVel/2
                                 vaiColV = 1
+                    
+                    #LADOS
+                    if(colB and colC and colD):#D
+                        if not tanque.vaiColidirD:
+                                tanque.pos.x -= absXVel/2
+                                tanque.vaiColidirD = 1
+                    
+                    if(colB and colC and colE):#E
+                        if not tanque.vaiColidirE:
+                                tanque.pos.x += absXVel/2
+                                tanque.vaiColidirE = 1
+
+                    if(colB and colE and colD):#B
+                        if not tanque.vaiColidirB:
+                                tanque.pos.y -= absYVel/2
+                                tanque.vaiColidirB = 1
+
+                    if(colC and colE and colD):#C
+                        if not tanque.vaiColidirC:
+                                tanque.pos.y += absYVel/2
+                                tanque.vaiColidirC = 1                    
+
+                    #CANTOS
+                    if(colD and colC):#DC
+                        if not tanque.vaiColidirD :
+                            tanque.pos.x -= absXVel/2
+                            tanque.vaiColidirD = 1
+                        if not tanque.vaiColidirC:    
+                            tanque.pos.y += absYVel/2
+                            tanque.vaiColidirC = 1
+                    
+                    if(colD and colB):#DB
+                        if not tanque.vaiColidirD:
+                            tanque.pos.x -= absXVel/2
+                            tanque.vaiColidirD = 1
+                        if not tanque.vaiColidirB:   
+                            tanque.pos.y -= absYVel/2
+                            tanque.vaiColidirB = 1
+                    
+                    if(colE and colC):#EC
+                        if not tanque.vaiColidirE:
+                            tanque.pos.x += absXVel/2
+                            tanque.vaiColidirE = 1
+                        if not tanque.vaiColidirC:    
+                            tanque.pos.y += absYVel/2
+                            tanque.vaiColidirC = 1
+                            
+                    if(colE and colB):#EB 
+                        if not tanque.vaiColidirE:      
+                            tanque.pos.x += absXVel/2
+                            tanque.vaiColidirE = 1
+                        if not tanque.vaiColidirB:   
+                            tanque.pos.y -= absYVel/2
+                            tanque.vaiColidirB = 1
+
+
+                    
                         
                         
         if tanque.vaiColidirB and tanque.vaiColidirC and tanque.vaiColidirE and tanque.vaiColidirD:
