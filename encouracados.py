@@ -107,7 +107,7 @@ class Encouracados(pg.sprite.Sprite):
             t = self.playerTanks[i]
             t.dead = self.playerNetInfo[i][5]
             # Trata morte
-            if not self.playerNetInfo[i][6] or t.dead:
+            if not self.playerNetInfo[i][6] or t.dead or self.playerNetInfo[i][5]:
                 t.dead = True
                 t.kill()
             if t.alive() and t.dead == False:
@@ -137,7 +137,7 @@ class Encouracados(pg.sprite.Sprite):
                                 BALA_VEL_LIN,
                                 t
                                 )
-                    print(t.bulletDict, "|", t.bulletGroup  , "|", b.id  )
+                    #print(t.bulletDict, "|", t.bulletGroup  , "|", b.id  )
                     self.allSpritesGroup.add(b)
 
         b: Bullet
@@ -158,7 +158,7 @@ class Encouracados(pg.sprite.Sprite):
                
                 for b in g:
                     for k in pg.sprite.spritecollide(b, h, False):
-                        print("BLING")
+                        #print("BLING")
                         k.remove(k.tank.bulletGroup)
                         b.remove(b.tank.bulletGroup)
                         break
@@ -177,7 +177,7 @@ class Encouracados(pg.sprite.Sprite):
         # Trata colisao de balas com players
         for t in self.playerTanks:
             for g in self.playerBulletGroup:
-                if t.bulletGroup == g:
+                if t.bulletGroup == g or not t.alive():
                     continue
                 for b in pg.sprite.spritecollide(t, g, False):
                     b.remove(b.tank.bulletGroup)

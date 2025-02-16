@@ -28,13 +28,17 @@ def victoryHandling(game: Encouracados):
         if w.dead == False:
             winner = w
 
-    text = winner.name + ' ganhou!'
-    
+    if winner:    
+        text = winner.name + ' ganhou!'
+        corT = winner.color
+    else:
+        text = 'Empate!'
+        corT = BRANCO
+        
     meiox = ((game.screenWidth)/2)
     meioy = ((game.screenHeight)/2)
     
-    corT = winner.color
-
+    
     drawText(text,fontText,corT,PRETO,meiox,meioy)
 
     pg.display.update()
