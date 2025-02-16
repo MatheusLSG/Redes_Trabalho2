@@ -1,6 +1,8 @@
 import socket
 import pickle
 
+from globals import PLAYERS_QTD
+
 class Network:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -31,7 +33,7 @@ class Network:
     def sendObj(self, data):
         try:
             self.client.send(pickle.dumps(data))        #manda player
-            rec = self.client.recv(4096*8)
+            rec = self.client.recv(4096*4*PLAYERS_QTD)
             if rec:
                 return pickle.loads(rec)        #recebe players
             else:
@@ -42,7 +44,7 @@ class Network:
     def sendStr(self, data: str):
         try:
             self.client.send(str.encode(data))          #manda str
-            return (self.client.recv(2048*4)).decode()  #recebe str
+            return (self.client.recv(2048)).decode()  #recebe str
         except socket.error as e:
             print(e)
 

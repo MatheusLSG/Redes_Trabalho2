@@ -40,7 +40,7 @@ def threaded_client(conn: socket.socket, addr, p: int, gameId):
                     conn.send(str.encode("start"))
                     
                     #AttNetInfo
-                    pInfo = pickle.loads(conn.recv(4096*8))
+                    pInfo = pickle.loads(conn.recv(4096*16))
                 
                     if not pInfo:
                         print("Desconectado")
@@ -53,7 +53,7 @@ def threaded_client(conn: socket.socket, addr, p: int, gameId):
                         print("Recebido: ", pInfo)
                         print("Mandando: ", resp)
                     
-                    conn.sendall(pickle.dumps(resp))
+                        conn.sendall(pickle.dumps(resp))
                 
                 else:
                     conn.send(str.encode(str(games[gameId].playersConnected)))
@@ -70,7 +70,7 @@ def threaded_client(conn: socket.socket, addr, p: int, gameId):
                     conn.send(str.encode(str("end")))
                 
                 #AttNetInfo
-                pInfo = pickle.loads(conn.recv(4096*8))
+                pInfo = pickle.loads(conn.recv(4096*16))
                 
                 if not pInfo:
                     print("Desconectado")
@@ -83,7 +83,7 @@ def threaded_client(conn: socket.socket, addr, p: int, gameId):
                     print("Recebido: ", pInfo)
                     print("Mandando: ", resp)
                 
-                conn.sendall(pickle.dumps(resp))
+                    conn.sendall(pickle.dumps(resp))
                 
             elif data == "disconnect":
                 games[gameId].playerNetInfo[p][6] = False
