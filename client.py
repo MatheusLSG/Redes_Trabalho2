@@ -190,7 +190,7 @@ def main():
                 
                 res = n.connect()
                 
-                if(  res != None ):
+                if  res != None :
                     game.playerId = int(res)
                     game.gameState = 3
                 else:
@@ -204,10 +204,25 @@ def main():
                 
                 res =  n.sendStr("waiting")
                 
-                if res == "start":
-                    game.gameState = 4
-                elif 0 <= int(res) <= 4:
-                    game.playersConnected = int(res)
+                if res != None :
+                   
+                    if res == "start":                
+                        p = game.playerTanks[game.playerId]
+            
+                        #Recebe atualizacoes    
+                        g = n.sendObj( (p.name, p.pos, p.angle, p.bulletDict, False, p.dead, p.connected) )
+                        
+                        if g != None:
+                            game.playerNetInfo = g
+                        else:
+                            lostConnectionMenu(game)
+                            game.inGame = 0
+                        
+                        game.gameState = 4
+                        
+                    elif 0 <= int(res) <= 4:
+                        game.playersConnected = int(res)
+                
                 else:
                     lostConnectionMenu(game)
                     game.inGame = 0
@@ -215,15 +230,15 @@ def main():
                 clock.tick(60)
             #JOGANDO
             if game.gameState == 4:
-                if game.playersAlive > 1:
-                    
-                    
-                    res =  n.sendStr("ready")
-                    
-                    if res == "ok":
-                        
-                        #Computa disparo
+                res =  n.sendStr("ready")
+                
+                game.eventHandling()
+                game.update()
+                
+                if res != None :
+                    if res == "ok":                        
                         p = game.playerTanks[game.playerId]
+                        #Computa disparo
                         shot = False
                         for evento in game.eventList:           
                             if evento.type == pg.KEYDOWN:
@@ -232,23 +247,58 @@ def main():
                                     p.alive()  
                                 ):
                                     shot = True
-                        #Recebe atualizacoes         
-                        game.playerNetInfo = n.sendObj( (p.name, p.pos, p.angle, shot, p.dead, p.connected) )
+                        #Recebe atualizacoes    
+                        g = n.sendObj( (p.name, p.pos, p.angle, p.bulletDict, True, p.dead, p.connected) )
+                        
+                        if g != None:
+                            game.playerNetInfo = g
+                        else:
+                            lostConnectionMenu(game)
+                            game.inGame = 0
+                    elif res == "end":
+                        p = game.playerTanks[game.playerId]
+                        #Computa disparo
+                        shot = False
+                        for evento in game.eventList:           
+                            if evento.type == pg.KEYDOWN:
+                                if (evento.key == pg.K_SPACE and 
+                                    p.bulletQtd and 
+                                    p.alive()  
+                                ):
+                                    shot = True
+                        #Recebe atualizacoes    
+                        g = n.sendObj( (p.name, p.pos, p.angle, p.bulletDict, shot, p.dead, p.connected) )
+                        
+                        if g != None:
+                            game.playerNetInfo = g
+                            game.eventHandling()
+                            game.update()
+                        else:
+                            lostConnectionMenu(game)
+                            game.inGame = 0
+                            
+                        game.gameState = 5
                     else:
                         lostConnectionMenu(game)
                         game.inGame = 0
-                    
-                    game.eventHandling()
-                    game.update()
-                    
-                    draw(game)
-                    
-                    clock.tick(60)
-                    
-                else: 
-                    victoryHandling(game)
-                    n.disconnect()
-                    pg.time.delay(5000) #espera por 5 segundos
+                else:
+                    lostConnectionMenu(game)
+                    game.inGame = 0
+                
+                
+                
+                draw(game)
+                
+                clock.tick(60)
+                                
+            if game.gameState == 5:
+                game.eventHandling()
+                game.update()
+                
+                victoryHandling(game)
+                n.disconnect()
+                pg.time.delay(5000) #espera por 5 segundos
+            
             #update
             pg.display.update()
             exitHandling(game)

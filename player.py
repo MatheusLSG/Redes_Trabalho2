@@ -31,6 +31,10 @@ class Tank(pg.sprite.Sprite):
         
         self.bulletGroup = pg.sprite.Group() 
         self.bulletQtd = bulletQtd
+        self.bulletDict: dict[int, bool]
+        self.bulletDict = dict()
+        for i in range(bulletQtd):
+            self.bulletDict[i] = False
         self.bulletCd = bulletCd
 
         self.name = name
@@ -186,6 +190,7 @@ class Tank(pg.sprite.Sprite):
 class Bullet(pg.sprite.Sprite):
     
     def __init__(self,
+                 id: int,
                  image: pg.Surface,
                  scale: float,
                  vel: int,
@@ -194,10 +199,14 @@ class Bullet(pg.sprite.Sprite):
          # Inicializando variaveis
         pg.sprite.Sprite.__init__(self)
         
+        self.id = id
+        
         self.image = image
         
         self.tank = tank
         self.tank.bulletQtd -= 1
+        self.tank.bulletDict[self.id] = True
+        self.tank.bulletGroup.add(self)
         
         self.angle = tank.angle
         
@@ -226,6 +235,7 @@ class Bullet(pg.sprite.Sprite):
         self.lifeTime = pg.time.get_ticks()
 
         
+        
     def update(self):
         self.pos += self.dir*self.vel
         
@@ -233,7 +243,8 @@ class Bullet(pg.sprite.Sprite):
 
         self.rect = novoRetangulo
 
-        if pg.time.get_ticks() - self.lifeTime >= self.tank.bulletCd:
+        if pg.time.get_ticks() - self.lifeTime >= self.tank.bulletCd or self.tank.bulletDict[self.id] == False:
+            
             self.remove(self.groups())
             self.destroi()
             
@@ -241,6 +252,7 @@ class Bullet(pg.sprite.Sprite):
         surface.blit(self.image, dest=self.rect)
 
     def destroi(self):
+        self.tank.bulletDict[self.id] = False
         self.tank.bulletQtd += 1
         self.kill()
         del(self)

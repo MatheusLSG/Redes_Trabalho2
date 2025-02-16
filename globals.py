@@ -26,7 +26,7 @@ ROXO = (158, 0, 235)
 VERDE = (66, 224, 0)
 AREIA = (255, 247, 193)
 
-PLAYERS_QTD = 3
+PLAYERS_QTD = 4
 
 #
 INI_POS_P = [
@@ -50,24 +50,12 @@ SPRITE_P_PATH = [
                 "sprites/jogador/tanqueJogador4.png"
                 ]
 
-INPUTS_P = [
-            (pg.K_a, pg.K_d, pg.K_w, pg.K_s, pg.K_SPACE), 
-            (pg.K_KP4, pg.K_KP6, pg.K_KP8, pg.K_KP5, pg.K_KP_ENTER),
-            (pg.K_f, pg.K_h, pg.K_t, pg.K_g, pg.K_n),
-            (pg.K_j, pg.K_l, pg.K_i, pg.K_k, pg.K_PERIOD),
-            ]
-TEXTO_VITORIA_P = [
-                    'Player 1 Venceu!',
-                    'Player 2 Venceu!',
-                    'Player 3 Venceu!',
-                    'Player 4 Venceu!'
-                    ]
 COR_VITORIA_P = [
-                    AZUL,
-                    LARANJA,
-                    VERDE,
-                    ROXO
-                    ]
+                AZUL,
+                LARANJA,
+                VERDE,
+                ROXO
+                ]
 #
 TANQUE_SPRITE_LARGURA = 64
 TANQUE_SPRITE_ALTURA = 64
@@ -77,7 +65,6 @@ TANQUE_VEL_LIN = 2
 TANQUE_VEL_ANG = 2
 TANQUE_TIRO_QTD = 1
 TANQUE_TIRO_CD = 1000 #em ms
-
 
 SPRITE_BALA_PATH = "sprites/bala/bala.png"
 
@@ -97,10 +84,5 @@ TEXTO_FONTE = 'comicsansms'
 TANQUE_SPRITE_LARGURA = 64
 TANQUE_SPRITE_ALTURA = 64
 TANQUE_PROPORCAO = 0.5
-
-TANQUE_VEL_LIN = 2
-TANQUE_VEL_ANG = 2
-TANQUE_TIRO_QTD = 2
-TANQUE_TIRO_CD = 1000 #em ms
 
 MAP_DATAPATH = "mapas/mapa.xlsx"

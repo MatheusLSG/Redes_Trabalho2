@@ -25,7 +25,7 @@ class Encouracados(pg.sprite.Sprite):
         self.inGame = True
         self.screenWidth = TELA_LARGURA 
         self.screenHeight =  TELA_ALTURA
-        self.playersConnected = 0
+        self.playersConnected = 1
         
         
         self.playerNetInfo: list[
@@ -33,6 +33,7 @@ class Encouracados(pg.sprite.Sprite):
                                     str,        #NAME
                                     pg.Vector2, #POS
                                     float,      #ANGLE
+                                    dict[int, bool], #BALAS
                                     bool,       #SHOT
                                     bool,       #DEAD
                                     bool        #CONNECTED
@@ -40,7 +41,7 @@ class Encouracados(pg.sprite.Sprite):
         self.playerNetInfo = list()
         #self.playerNetInfo = list(tuple(pg.Rect(0,0,0,0), 0, False))
         for i in range(PLAYERS_QTD):
-            self.playerNetInfo.append(("", pg.Vector2(0,0), 0, False, False, True))
+            self.playerNetInfo.append(("", pg.Vector2(0,0), 0, dict(), False, False, True))
         
         self.allSpritesGroup = pg.sprite.Group()
         #Texto
@@ -76,7 +77,7 @@ class Encouracados(pg.sprite.Sprite):
                      TANQUE_VEL_ANG, 
                      TANQUE_TIRO_QTD,
                      TANQUE_TIRO_CD,
-                     TEXTO_VITORIA_P[i],
+                     "",
                      COR_VITORIA_P[i])
             
             self.playerBulletGroup.append(t.bulletGroup)
@@ -100,37 +101,51 @@ class Encouracados(pg.sprite.Sprite):
 
     def eventHandling(self):
         
+        self.playersAlive = 0
         # Trata eventos dos players  
         for i in range(len(self.playerTanks)):
             t = self.playerTanks[i]
-            t.dead = self.playerNetInfo[i][4]
-            if not self.playerNetInfo[i][5] or t.dead:
+            t.dead = self.playerNetInfo[i][5]
+            # Trata morte
+            if not self.playerNetInfo[i][6] or t.dead:
                 t.dead = True
                 t.kill()
-                self.playersAlive -= 1
-            if t.alive():
+            if t.alive() and t.dead == False:
+                #Atualiza vivos
+                self.playersAlive += 1        
                 #Nome
                 t.name = self.playerNetInfo[i][0]
                 #Atualiza pos
                 t.pos = self.playerNetInfo[i][1]
                 t.angle = self.playerNetInfo[i][2]   
+                #Verifica balas
+                t.bulletDict = self.playerNetInfo[i][3]
+                
                 #Move
                 if i == self.playerId :
                     t.move(self.map.mapGroup, pg.key.get_pressed())
                 else:
                     t.move(self.map.mapGroup, None)   
                 #Atira
-                if (self.playerNetInfo[i][3] and 
+                if (self.playerNetInfo[i][4] and 
                     t.bulletQtd and 
                     t.alive()
                 ):
-                    b = Bullet(self.bulletImg,
+                    b = Bullet( t.bulletQtd-1,
+                                self.bulletImg,
                                 BALA_PROPORCAO,
                                 BALA_VEL_LIN,
-                                t)
-                    t.bulletGroup.add(b)
+                                t
+                                )
+                    print(t.bulletDict, "|", t.bulletGroup  , "|", b.id  )
                     self.allSpritesGroup.add(b)
-                        
+
+        b: Bullet
+        # Trata dicionarios
+        for g in self.playerBulletGroup:
+            for b in g:
+                if b.tank.bulletDict[b.id] == False:
+                    b.remove(b.tank.bulletGroup)
 
         # Trata colisao de balas com balas
         b: Bullet
@@ -154,6 +169,7 @@ class Encouracados(pg.sprite.Sprite):
                 if pg.sprite.spritecollide(b, self.map.mapGroup, False) != []:
                     b.remove(b.tank.bulletGroup)
                     break
+                    
     
 
         b: Bullet

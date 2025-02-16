@@ -24,6 +24,8 @@ games:dict[int,Encouracados] = {}
 idCount = 0                
 idList = list(i for i in range(PLAYERS_QTD))
 
+
+
 def threaded_client(conn: socket.socket, addr, p: int, gameId):
     global idCount
     conn.send(str.encode(str(p)))
@@ -36,13 +38,38 @@ def threaded_client(conn: socket.socket, addr, p: int, gameId):
             if data == "waiting":
                 if games[gameId].start:
                     conn.send(str.encode("start"))
+                    
+                    #AttNetInfo
+                    pInfo = pickle.loads(conn.recv(4096*8))
+                
+                    if not pInfo:
+                        print("Desconectado")
+                        break
+                    else:
+                        games[gameId].playerNetInfo[p] = pInfo
+                        
+                        resp = games[gameId].playerNetInfo
+                        
+                        print("Recebido: ", pInfo)
+                        print("Mandando: ", resp)
+                    
+                    conn.sendall(pickle.dumps(resp))
+                
                 else:
                     conn.send(str.encode(str(games[gameId].playersConnected)))
                  
                 
             elif data == "ready":
-                conn.send(str.encode(str("ok")))
+                vivos = 0
+                for a in games[gameId].playerNetInfo:
+                    if not a[5]: vivos += 1 
                 
+                if vivos > 1:
+                    conn.send(str.encode(str("ok")))
+                else:
+                    conn.send(str.encode(str("end")))
+                
+                #AttNetInfo
                 pInfo = pickle.loads(conn.recv(4096*8))
                 
                 if not pInfo:
@@ -57,8 +84,9 @@ def threaded_client(conn: socket.socket, addr, p: int, gameId):
                     print("Mandando: ", resp)
                 
                 conn.sendall(pickle.dumps(resp))
+                
             elif data == "disconnect":
-                games[gameId].playerNetInfo[p][4] = False
+                games[gameId].playerNetInfo[p][6] = False
                 break
             else:
                 break
@@ -68,31 +96,51 @@ def threaded_client(conn: socket.socket, addr, p: int, gameId):
     print("Fechando conexão em: ", addr)
     conn.close()
 
-    if idCount == 1:
-        del(games[gameId])
-        idCount = 0
-        print("Fechando partida")
-    else:
-        idList.append(p)
-        games[gameId].playersConnected -= 1
+    if not games[gameId].start:
+        if idCount == 1:
+            del(games[gameId])
+            print("Fechando partida...")
+        elif not games[gameId].start:
+            idList.append(p)
+            games[gameId].playersConnected -= 1
         idCount -= 1
-    
+    else:
+        if games[gameId].playersConnected > 1:
+            games[gameId].playersConnected -= 1
+            games[gameId].playerNetInfo[p]=(games[gameId].playerNetInfo[p][0],
+                                            games[gameId].playerNetInfo[p][1],
+                                            games[gameId].playerNetInfo[p][2],
+                                            games[gameId].playerNetInfo[p][3],
+                                            games[gameId].playerNetInfo[p][4],
+                                            True,
+                                            False
+                                            )
+        else:
+            del(games[gameId])
+            print("Fechando partida")
+
 
 while True:
     conn, addr = s.accept()
     
     idCount += 1
     gameId = (idCount - 1)//PLAYERS_QTD # o 2 aqui controla a quantidade de pessoas por jogo
+    
+    
     if idCount % PLAYERS_QTD == 1: 
         games[gameId] = Encouracados(gameId)
         print("Criando um novo jogo...")                
-        idList = list(i for i in range(PLAYERS_QTD))
+        idList = list(i for i in range(PLAYERS_QTD-1,-1,-1))
     elif idCount % PLAYERS_QTD == 0:
         games[gameId].start = True
+        games[gameId].playersConnected += 1
+    else:
+        games[gameId].playersConnected += 1
         
-    games[gameId].playersConnected += 1
     
+    print("    PlayersConnected: ", games[gameId].playersConnected)
     print("Conectado em: ", addr)
+    
     start_new_thread(threaded_client, (conn, addr, idList.pop(), gameId))
 
 
