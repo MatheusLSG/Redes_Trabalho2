@@ -177,8 +177,9 @@ class Encouracados(pg.sprite.Sprite):
         # Trata colisao de balas com players
         for t in self.playerTanks:
             if not t.alive() or t.dead:
-                t.dead = True
-                t.kill()
+                #t.dead = True
+                #t.kill()
+                pass
             else:
                 for g in self.playerBulletGroup:
                     if t.bulletGroup != g: 
