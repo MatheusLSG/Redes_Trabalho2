@@ -176,14 +176,16 @@ class Encouracados(pg.sprite.Sprite):
         
         # Trata colisao de balas com players
         for t in self.playerTanks:
-            for g in self.playerBulletGroup:
-                if t.bulletGroup == g or not t.alive():
-                    continue
-                for b in pg.sprite.spritecollide(t, g, False):
-                    b.remove(b.tank.bulletGroup)
-                    t.dead = True
-                    t.kill()
-                    break
+            if not t.alive() or t.dead:
+                t.dead = True
+                t.kill()
+            else:
+                for g in self.playerBulletGroup:
+                    if t.bulletGroup != g: 
+                        for b in pg.sprite.spritecollide(t, g, False):
+                            b.remove(b.tank.bulletGroup)
+                            t.dead = True
+                            break
     
     def update(self):
         self.allSpritesGroup.update()

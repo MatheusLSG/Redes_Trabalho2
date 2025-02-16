@@ -23,7 +23,8 @@ def draw(game: Encouracados):
     
 def victoryHandling(game: Encouracados):
     # Imprime text de vitoria
-
+    winner = None
+    
     for w in game.playerTanks:
         if w.dead == False:
             winner = w
@@ -252,7 +253,7 @@ def main():
                                 ):
                                     shot = True
                         #Recebe atualizacoes    
-                        g = n.sendObj( (p.name, p.pos, p.angle, p.bulletDict, True, p.dead, p.connected) )
+                        g = n.sendObj( (p.name, p.pos, p.angle, p.bulletDict, shot, p.dead, p.connected) )
                         
                         if g != None:
                             game.playerNetInfo = g
