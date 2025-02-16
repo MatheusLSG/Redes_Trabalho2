@@ -1,7 +1,7 @@
 
 import socket 
 from  _thread import * 
-from teste.player import Player
+from teste.play import Player
 import pickle
 
 server = "192.168.15.3"

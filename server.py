@@ -1,10 +1,11 @@
 
 import socket 
 from  _thread import * 
-from teste.player import Player
 import pickle
-from game import Game
-server = "192.168.15.3"
+from encouracados import Encouracados
+from globals import *
+
+server = "192.168.15.4"
 porta = 5555 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -13,63 +14,86 @@ try:
     s.bind((server, porta))
 except socket.error as e:
     str(e)
-
+    
 s.listen()
 print("Esperando conexões, Server disponivel")
 
-connected = set()
-games:dict[int,Game] = {}
-idCount = 0
 
-def threaded_client(conn: socket.socket, p: int, gameId):
+connected = set()
+games:dict[int,Encouracados] = {}
+idCount = 0                
+idList = list(i for i in range(PLAYERS_QTD))
+
+def threaded_client(conn: socket.socket, addr, p: int, gameId):
     global idCount
     conn.send(str.encode(str(p)))
     
-    reply = ""
+    resp = ""
     while True:
-        data = conn.recv(4096).decode()
-        
-        if gameId in games:
-            game = games[gameId]
+        try:
+            data = conn.recv(2048).decode()
             
-            if not data:
+            if data == "waiting":
+                if games[gameId].start:
+                    conn.send(str.encode("start"))
+                else:
+                    conn.send(str.encode(str(games[gameId].playersConnected)))
+                 
+                
+            elif data == "ready":
+                conn.send(str.encode(str("ok")))
+                
+                pInfo = pickle.loads(conn.recv(4096*8))
+                
+                if not pInfo:
+                    print("Desconectado")
+                    break
+                else:
+                    games[gameId].playerNetInfo[p] = pInfo
+                    
+                    resp = games[gameId].playerNetInfo
+                    
+                    print("Recebido: ", pInfo)
+                    print("Mandando: ", resp)
+                
+                conn.sendall(pickle.dumps(resp))
+            elif data == "disconnect":
+                games[gameId].playerNetInfo[p][4] = False
                 break
             else:
-                if data == "reset":
-                    game.reset()
-                elif data != "get":
-                    game.play(p, data)
-            
-                reply = game
-                conn.sendall(pickle.dumps(reply))
-                
+                break
+        except:
+            print("Conexão perdida")
+            break
+    print("Fechando conexão em: ", addr)
+    conn.close()
+
+    if idCount == 1:
+        del(games[gameId])
+        idCount = 0
+        print("Fechando partida")
+    else:
+        idList.append(p)
+        games[gameId].playersConnected -= 1
+        idCount -= 1
+    
 
 while True:
     conn, addr = s.accept()
-    print("Conectado em: ", addr)
-
-    idCount += 1
-    p = 0
-    gameId = (idCount - 1)//2 # o 2 aqui controla a quantidade de pessoas por jogo
-    if idCount % 2 == 1: 
-        games[gameId] = Game(gameId)
-        print("Creando um novo jogo...")
-    else:
-        games[gameId].ready = True
-        p = 1
     
-    start_new_thread(threaded_client, (conn, p, gameId))
-
-
-
-
-
-
-
-
-
-
-
+    idCount += 1
+    gameId = (idCount - 1)//PLAYERS_QTD # o 2 aqui controla a quantidade de pessoas por jogo
+    if idCount % PLAYERS_QTD == 1: 
+        games[gameId] = Encouracados(gameId)
+        print("Criando um novo jogo...")                
+        idList = list(i for i in range(PLAYERS_QTD))
+    elif idCount % PLAYERS_QTD == 0:
+        games[gameId].start = True
+        
+    games[gameId].playersConnected += 1
+    
+    print("Conectado em: ", addr)
+    start_new_thread(threaded_client, (conn, addr, idList.pop(), gameId))
 
 
 

@@ -1,41 +1,270 @@
 import pygame as pg
-from teste.rede import Rede
-from teste.player import Player
+from encouracados import *
+from network import Network
 
-largura = 500
-altura = 500
-tela = pg.display.set_mode((largura,altura))
-pg.display.set_caption("Cliente")
+pg.init()
+pg.font.init() 
 
-def redesenharJanela(p: Player, p2: Player):
-    tela.fill((255,255,255))
-    p.draw(tela)
-    p2.draw(tela)
+screen = pg.display.set_mode((TELA_LARGURA, TELA_ALTURA))
+fontText = pg.font.SysFont(TEXTO_FONTE, 30)
+
+def draw(game: Encouracados):
+    screen.fill(AREIA)
+    game.map.draw(screen)  
+    
+    t: Tank
+    for t in game.playerTanks:
+        t.draw(screen)
+    
+    b: Bullet
+    for t in game.playerTanks:
+        for b in t.bulletGroup:
+            b.draw(screen)
+    
+def victoryHandling(game: Encouracados):
+    # Imprime text de vitoria
+
+    for w in game.playerTanks:
+        if w.dead == False:
+            winner = w
+
+    text = winner.name + ' ganhou!'
+    
+    meiox = ((game.screenWidth)/2)
+    meioy = ((game.screenHeight)/2)
+    
+    corT = winner.color
+
+    drawText(text,fontText,corT,PRETO,meiox,meioy)
 
     pg.display.update()
+    
+    game.inGame = 0
+    
+def drawText(text, fonte: pg.font.Font, textColor, shadowColor, x, y):
+    ts =  fonte.render(text, False, shadowColor)
+    t = fonte.render(text, False, textColor)
+
+    cTx = t.get_width()/2
+    cTy = t.get_height()/2
+
+    screen.blit(ts, ( x-cTx+1, y-cTy+1 ))
+    screen.blit(ts, ( x-cTx+1, y-cTy-1 ))
+    screen.blit(ts, ( x-cTx-1, y-cTy+1 ))
+    screen.blit(ts, ( x-cTx-1, y-cTy-1 ))
+    screen.blit(t, ( x-cTx, y-cTy ))
+
+def playMenu(game: Encouracados):
+    screen.fill(AREIA)
+    if game.playButton.draw(screen):
+        game.gameState = 1
+
+def nameMenu(game: Encouracados):
+    
+    for event in game.eventList: 
+
+        if event.type == pg.QUIT: 
+            game.inGame = False
+            game.gameState = -1
+            break
+
+        if event.type == pg.MOUSEBUTTONDOWN: 
+            if game.nameBox.collidepoint(event.pos): 
+                game.NBActive = True
+            else: 
+                game.NBActive = False
+
+        if event.type == pg.KEYDOWN: 
+            if event.key == pg.K_ESCAPE:
+                game.inGame = False
+                game.gameState = -1
+                break
+            
+            if event.key == pg.K_SPACE:
+                continue
+            
+            if event.key == pg.K_RETURN: 
+                if len(game.playerName)>0:
+                    game.gameState = 2
+                    
+                    break
+                continue
+
+            if event.key == pg.K_BACKSPACE: 
+                game.playerName = game.playerName[:-1] 
+            elif len(game.playerName) <= 20: 
+                game.playerName += event.unicode
+    
+    screen.fill(AREIA) 
+
+    if game.NBActive: 
+        cor = game.NBActiveColor 
+    else: 
+        cor = game.NBPassiveColor
+
+    #"digite seu nome"
+    instrucao = fontText.render("Digite seu nome:", False, PRETO)
+    screen.blit(instrucao, (game.nameBox.centerx-instrucao.get_width()/2, game.nameBox.y-instrucao.get_height()-8))
+    #desenha retangulo
+    sombra = game.nameBox.copy()
+    sombra.w = sombra.w + 4
+    sombra.h = sombra.h + 4
+    sombra.centerx = game.nameBox.centerx
+    sombra.centery = game.nameBox.centery
+    pg.draw.rect(screen, PRETO, sombra)
+    pg.draw.rect(screen, cor, game.nameBox) 
+
+    text = fontText.render(game.playerName, False, PRETO)
+    #desenha nome
+    screen.blit(text, (game.nameBox.centerx-text.get_width()/2, game.nameBox.centery-text.get_height()/2))
+    
+    #"Pressione 'Enter' para selecionar"
+    instrucao = fontText.render("Pressione 'Enter' para selecionar", False, PRETO)
+    screen.blit(instrucao, (game.nameBox.centerx-instrucao.get_width()/2, game.nameBox.y+instrucao.get_height()+8))
+    
+def connectionMenu(game: Encouracados):
+    screen.fill(AREIA)
+    drawText("Conectando...", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
+    pg.display.update()
+    # pg.time.delay(1000)  
+    
+def failToConnectMenu(game: Encouracados):
+    screen.fill(AREIA)
+    drawText("Falha na conexão...", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
+    pg.display.update()
+    pg.time.delay(1000)  
+ 
+def lostConnectionMenu(game: Encouracados):
+    screen.fill(AREIA)
+    drawText("Conexão perdida...", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
+    pg.display.update()
+    pg.time.delay(1000)  
+
+def waitingMenu(game: Encouracados):
+    game.playerTanks[game.playerId].name = game.playerName
+    screen.fill(AREIA)
+    drawText("Esperando outros jogadores (" + str(game.playersConnected) + "/" + str(PLAYERS_QTD) + ")", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
+    pg.display.update()
+    #pg.time.delay(4000)  
+
+def exitHandling(game: Encouracados):
+    for event in game.eventList:
+        if event.type == pg.QUIT:
+            game.inGame = False
+            game.gameState = -1
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_ESCAPE:
+                game.inGame = False
+                game.gameState = -1
+
 
 def main():
-    rodando = True
-    r = Rede()
-
-    p:Player = r.getP()
-
+    
+    
+    pg.display.set_caption('Encouraçados')
     clock = pg.time.Clock()
 
-    while rodando:
-        clock.tick(60)
-
-        p2 = r.enviar(p)
-        
-        p2.update()
-
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                rodando = False
-                
-        p.mover()
-        redesenharJanela(p, p2)
+    appRunning = True
     
-    pg.quit()
+    
+    game: Encouracados
+    
+    # Loop do jogo
+    while appRunning:
+        # Instancia um novo jogo    
+        game = Encouracados(-1)
+        n = Network()
+        while  game.inGame:
+            game.eventList = pg.event.get()
+            #MENU
+            if game.gameState == 0:
+                playMenu(game)
+                clock.tick(60)
+            #NOME
+            if game.gameState == 1:
+                nameMenu(game)
+                clock.tick(60)
+            #CONECTANDO
+            if game.gameState == 2:
+                connectionMenu(game)
                 
-main()
+                res = n.connect()
+                
+                if(  res != None ):
+                    game.playerId = int(res)
+                    game.gameState = 3
+                else:
+                    failToConnectMenu(game)
+                    game.inGame = 0
+                    
+                clock.tick(60)
+            #ESPERANDO JOGADORES
+            if game.gameState == 3:
+                waitingMenu(game)
+                
+                res =  n.sendStr("waiting")
+                
+                if res == "start":
+                    game.gameState = 4
+                elif 0 <= int(res) <= 4:
+                    game.playersConnected = int(res)
+                else:
+                    lostConnectionMenu(game)
+                    game.inGame = 0
+                    
+                clock.tick(60)
+            #JOGANDO
+            if game.gameState == 4:
+                if game.playersAlive > 1:
+                    
+                    
+                    res =  n.sendStr("ready")
+                    
+                    if res == "ok":
+                        
+                        #Computa disparo
+                        p = game.playerTanks[game.playerId]
+                        shot = False
+                        for evento in game.eventList:           
+                            if evento.type == pg.KEYDOWN:
+                                if (evento.key == pg.K_SPACE and 
+                                    p.bulletQtd and 
+                                    p.alive()  
+                                ):
+                                    shot = True
+                        #Recebe atualizacoes         
+                        game.playerNetInfo = n.sendObj( (p.name, p.pos, p.angle, shot, p.dead, p.connected) )
+                    else:
+                        lostConnectionMenu(game)
+                        game.inGame = 0
+                    
+                    game.eventHandling()
+                    game.update()
+                    
+                    draw(game)
+                    
+                    clock.tick(60)
+                    
+                else: 
+                    victoryHandling(game)
+                    n.disconnect()
+                    pg.time.delay(5000) #espera por 5 segundos
+            #update
+            pg.display.update()
+            exitHandling(game)
+            
+            
+        # Checa se o game vai ser reiniciado
+        if game.gameState == -1:
+            appRunning = False
+
+        # Deleta instancia passada do jogo
+        del(n)
+        del(game)
+        gc.collect()
+
+
+if __name__ == '__main__':
+    main()
+    pg.quit()
+    sys.exit()

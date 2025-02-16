@@ -1,6 +1,6 @@
 import pygame as pg
-from teste.rede import Rede
-from teste.player import Player
+from n import Network
+from teste.play import Player
 
 largura = 500
 altura = 500

@@ -35,18 +35,25 @@ class Tank(pg.sprite.Sprite):
 
         self.name = name
         self.color = color
+        self.dead = False
+        self.connected = True
         
         self.mask = pg.mask.from_surface(self.image)
         
-    def move(self, colisors: pg.sprite.Group):
-        teclas = pg.key.get_pressed()
-
-        #ANGULO
-        if teclas[pg.K_a]:
-            self.angle = (self.angle+self.velAng)%360
+    def move(self, colisors: pg.sprite.Group, input):
+        if self.dead:
+            return
+        
             
-        if teclas[pg.K_d]:
-            self.angle = (self.angle-self.velAng)%360
+        keys = input 
+            
+        #ANGULO
+        if keys:
+            if keys[pg.K_a]:
+                self.angle = (self.angle+self.velAng)%360
+                
+            if keys[pg.K_d]:
+                self.angle = (self.angle-self.velAng)%360
 
         self.dir = pg.Vector2(1, 0).rotate(-self.angle)
         
@@ -57,12 +64,13 @@ class Tank(pg.sprite.Sprite):
         self.rect = newRect     
         self.mask = pg.mask.from_surface(self.image)   
         
-        #MOVIMENTO
-        if teclas[pg.K_w]:
-            self.pos += self.velLin*self.dir
-          
-        if teclas[pg.K_s]:
-            self.pos -= self.velLin*self.dir
+            #MOVIMENTO
+        if keys:
+            if keys[pg.K_w]:
+                self.pos += self.velLin*self.dir
+            
+            if keys[pg.K_s]:
+                self.pos -= self.velLin*self.dir
         
         #CHECA COLISOES
 
@@ -122,32 +130,32 @@ class Tank(pg.sprite.Sprite):
                         vet = pg.Vector2(tr.bottomright[0] - br.center[0], tr.bottomright[1] -br.center[1])
                         #red = 0.35
                 
-                print("")
+                #print("")
                 #calcular minivetor
-                print("vet: ", vet)
+                #print("vet: ", vet)
                 ang =  vet.angle_to(pg.Vector2(1,0))
                 
-                print("ang: ",ang)
+                #print("ang: ",ang)
                 
                 tg = math.tan( math.radians(ang) )
                 if 0.85 <= tg or -0.85 >= tg:
                     red = 0.25
-                print("tg: ",tg)
+                #print("tg: ",tg)
                 
                 absX = abs(vet.x)
                 absY = abs(vet.y)
                 
-                print("absX: ",absX)
-                print("absY: ",absY)
+                #print("absX: ",absX)
+                #print("absY: ",absY)
     
-                print("w: ",br.w)
-                print("h: ",br.h)
+                #print("w: ",br.w)
+                #print("h: ",br.h)
                 
                 reductX = br.w/2 - absX 
                 reductY = br.h/2 - absY 
                 
-                print("reductX: ",reductX)
-                print("reductY: ",reductY)
+                #print("reductX: ",reductX)
+                #print("reductY: ",reductY)
                 #X
                 if(reductX <= reductY):
                     reductY = reductX*tg
@@ -157,7 +165,7 @@ class Tank(pg.sprite.Sprite):
                 
                 reductV = pg.Vector2(reductX*math.copysign(1, vet.x), reductY*math.copysign(1, vet.y))
                 
-                print(reductV)
+                #print(reductV)
                 
                 self.pos += reductV*red #red age como um redutor no impacto da colisao
             
@@ -171,6 +179,8 @@ class Tank(pg.sprite.Sprite):
 
   
     def draw(self, surface: pg.Surface):
+        if self.dead:
+            return
         surface.blit(self.image, dest=self.rect)
 
 class Bullet(pg.sprite.Sprite):
