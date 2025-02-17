@@ -62,6 +62,7 @@ def drawText(text, fonte: pg.font.Font, textColor, shadowColor, x, y):
     screen.blit(t, ( x-cTx, y-cTy ))
 
 def playMenu(game: DesertWar):
+    pg.display.set_caption('DesertWar')
     screen.fill(AREIA)
     
     drawText("Desert War", fontTitle, VERDE, PRETO, screen.get_width()/2, 128)
@@ -74,6 +75,7 @@ def playMenu(game: DesertWar):
     pg.display.update()
 
 def nameMenu(game: DesertWar):
+    pg.display.set_caption('insertName')
     
     for event in game.eventList: 
 
@@ -137,24 +139,28 @@ def nameMenu(game: DesertWar):
     screen.blit(instrucao, (game.nameBox.centerx-instrucao.get_width()/2, game.nameBox.y+instrucao.get_height()+8))
     
 def connectionMenu(game: DesertWar):
+    pg.display.set_caption('connecting')
     screen.fill(AREIA)
     drawText("Conectando...", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
     pg.display.update()
     # pg.time.delay(1000)  
     
 def failToConnectMenu(game: DesertWar):
+    pg.display.set_caption('failConnection')
     screen.fill(AREIA)
     drawText("Falha na conexão...", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
     pg.display.update()
     pg.time.delay(1000)  
  
 def lostConnectionMenu(game: DesertWar):
+    pg.display.set_caption('lostConnection')
     screen.fill(AREIA)
     drawText("Conexão perdida...", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
     pg.display.update()
     pg.time.delay(1000)  
 
-def waitingMenu(game: DesertWar):
+def waitingMenu(game: DesertWar):   
+    pg.display.set_caption('waiting')
     game.playerTanks[game.playerId].name = game.playerName
     screen.fill(AREIA)
     drawText("Esperando outros jogadores (" + str(game.playersConnected) + "/" + str(PLAYERS_QTD) + ")", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
@@ -180,7 +186,7 @@ def main():
         print("Erro na passagem de argumentos")
         sys.exit()
     
-    pg.display.set_caption('Encouraçados')
+    pg.display.set_caption('DesertWar')
     clock = pg.time.Clock()
 
     appRunning = True
@@ -239,6 +245,7 @@ def main():
                             game.inGame = 0
                         
                         game.gameState = 4
+                        pg.display.set_caption(game.playerName)
                         
                     elif 0 <= int(res) <= 4:
                         game.playersConnected = int(res)

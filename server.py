@@ -2,7 +2,7 @@ import sys
 import socket 
 from  _thread import * 
 import pickle
-from desertwar import Encouracados
+from desertwar import DesertWar
 from globals import *
 
 try:
@@ -26,7 +26,7 @@ print("Esperando conexões, Server disponivel")
 
 
 connected = set()
-games:dict[int,Encouracados] = {}
+games:dict[int,DesertWar] = {}
 idCount = 0                
 idList = list(i for i in range(PLAYERS_QTD))
 
@@ -134,7 +134,7 @@ while True:
     
     
     if idCount % PLAYERS_QTD == 1: 
-        games[gameId] = Encouracados(gameId)
+        games[gameId] = DesertWar(gameId)
         print("Criando um novo jogo...")                
         idList = list(i for i in range(PLAYERS_QTD-1,-1,-1))
     elif idCount % PLAYERS_QTD == 0:
