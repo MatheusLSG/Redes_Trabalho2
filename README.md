@@ -8,7 +8,7 @@ O projeto consiste em um jogo de batalha de tanques topdown multijogador online 
     - **python** 
 - Bibliotecas utilizadas:
     - **pygame** (Interface e controle de fluxo de jogo)
-    - **sockets** (Comunicação via red)
+    - **sockets** (Comunicação via rede)
     - **pickle** (Conversão de objetos em streams de dados)
     - **pandas** e **numpy** (Leitura de planilhas para geração do mapa)
 ## Como Executar
