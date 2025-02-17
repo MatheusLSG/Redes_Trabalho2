@@ -2,14 +2,15 @@ import socket
 import pickle
 
 from globals import PLAYERS_QTD
+from globals import SERVER_ADDR
 
 class Network:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server = "192.168.15.4"
+        self.server = SERVER_ADDR
         self.port = 5555
         self.addr = (self.server, self.port)
-        #self.p = self.connect()
+      
     
     def getP(self):
         return self.p
