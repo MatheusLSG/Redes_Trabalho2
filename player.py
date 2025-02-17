@@ -143,7 +143,7 @@ class Tank(pg.sprite.Sprite):
                 
                 tg = math.tan( math.radians(ang) )
                 if 0.85 <= tg or -0.85 >= tg:
-                    red = 0.25
+                    red = 0.5
                 #print("tg: ",tg)
                 
                 absX = abs(vet.x)

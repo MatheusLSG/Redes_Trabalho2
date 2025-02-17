@@ -1,21 +1,27 @@
-
+import sys
 import socket 
 from  _thread import * 
 import pickle
 from encouracados import Encouracados
 from globals import *
 
-server = "192.168.15.4"
+try:
+    server = sys.argv[1]
+except:
+    print("Erro na passagem de argumentos")
+    sys.exit()
+    
 porta = 5555 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
     s.bind((server, porta))
+    s.listen()
 except socket.error as e:
-    str(e)
+    print(e)
+    sys.exit()
     
-s.listen()
 print("Esperando conexões, Server disponivel")
 
 

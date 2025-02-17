@@ -1,3 +1,4 @@
+import sys
 import pygame as pg
 from encouracados import *
 from network import Network
@@ -164,7 +165,12 @@ def exitHandling(game: Encouracados):
 
 
 def main():
-    
+    server = None
+    try:
+        server = sys.argv[1]
+    except:
+        print("Erro na passagem de argumentos")
+        sys.exit()
     
     pg.display.set_caption('Encouraçados')
     clock = pg.time.Clock()
@@ -178,7 +184,8 @@ def main():
     while appRunning:
         # Instancia um novo jogo    
         game = Encouracados(-1)
-        n = Network()
+        
+        n = Network(server)
         while  game.inGame:
             game.eventList = pg.event.get()
             #MENU

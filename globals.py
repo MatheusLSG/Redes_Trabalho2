@@ -26,6 +26,7 @@ ROXO = (158, 0, 235)
 VERDE = (66, 224, 0)
 AREIA = (255, 247, 193)
 
+#PLayes
 PLAYERS_QTD = 2
 
 #
@@ -87,4 +88,3 @@ TANQUE_PROPORCAO = 0.5
 
 MAP_DATAPATH = "mapas/mapa.xlsx"
 
-SERVER_ADDR = "192.168.15.4"

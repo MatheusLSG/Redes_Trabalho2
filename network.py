@@ -2,12 +2,11 @@ import socket
 import pickle
 
 from globals import PLAYERS_QTD
-from globals import SERVER_ADDR
 
 class Network:
-    def __init__(self):
+    def __init__(self, server):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server = SERVER_ADDR
+        self.server = server
         self.port = 5555
         self.addr = (self.server, self.port)
       
@@ -20,7 +19,7 @@ class Network:
             self.client.shutdown(socket.SHUT_RDWR)        
             self.client.close() 
         except:
-            print("Erro")
+            print("Erro durante desligamento ao servidor")
             pass
         
     def connect(self):
@@ -28,7 +27,7 @@ class Network:
             self.client.connect(self.addr)          #Se conecta ao server
             return self.client.recv(2048).decode()  #Recebe resposta string do server
         except:
-            print("Erro")
+            print("Erro durante conexão com servidor")
             pass
 
     def sendObj(self, data):
