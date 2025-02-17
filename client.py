@@ -1,15 +1,16 @@
 import sys
 import pygame as pg
-from encouracados import *
+from desertwar import *
 from network import Network
 
 pg.init()
 pg.font.init() 
 
 screen = pg.display.set_mode((TELA_LARGURA, TELA_ALTURA))
-fontText = pg.font.SysFont(TEXTO_FONTE, 30)
+fontText = pg.font.SysFont(TEXTO_FONTE, 32)
+fontTitle = pg.font.SysFont(TEXTO_FONTE, 64,  bold=True, italic=True)
 
-def draw(game: Encouracados):
+def draw(game: DesertWar):
     screen.fill(AREIA)
     game.map.draw(screen)  
     
@@ -22,7 +23,7 @@ def draw(game: Encouracados):
         for b in t.bulletGroup:
             b.draw(screen)
     
-def victoryHandling(game: Encouracados):
+def victoryHandling(game: DesertWar):
     # Imprime text de vitoria
     winner = None
     
@@ -60,12 +61,19 @@ def drawText(text, fonte: pg.font.Font, textColor, shadowColor, x, y):
     screen.blit(ts, ( x-cTx-1, y-cTy-1 ))
     screen.blit(t, ( x-cTx, y-cTy ))
 
-def playMenu(game: Encouracados):
+def playMenu(game: DesertWar):
     screen.fill(AREIA)
+    
+    drawText("Desert War", fontTitle, VERDE, PRETO, screen.get_width()/2, 128)
+    
     if game.playButton.draw(screen):
         game.gameState = 1
+        
+    drawText("Jogar", fontTitle, PRETO, PRETO, game.playButton.rect.centerx, game.playButton.rect.centery)
+    
+    pg.display.update()
 
-def nameMenu(game: Encouracados):
+def nameMenu(game: DesertWar):
     
     for event in game.eventList: 
 
@@ -128,32 +136,32 @@ def nameMenu(game: Encouracados):
     instrucao = fontText.render("Pressione 'Enter' para selecionar", False, PRETO)
     screen.blit(instrucao, (game.nameBox.centerx-instrucao.get_width()/2, game.nameBox.y+instrucao.get_height()+8))
     
-def connectionMenu(game: Encouracados):
+def connectionMenu(game: DesertWar):
     screen.fill(AREIA)
     drawText("Conectando...", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
     pg.display.update()
     # pg.time.delay(1000)  
     
-def failToConnectMenu(game: Encouracados):
+def failToConnectMenu(game: DesertWar):
     screen.fill(AREIA)
     drawText("Falha na conexão...", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
     pg.display.update()
     pg.time.delay(1000)  
  
-def lostConnectionMenu(game: Encouracados):
+def lostConnectionMenu(game: DesertWar):
     screen.fill(AREIA)
     drawText("Conexão perdida...", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
     pg.display.update()
     pg.time.delay(1000)  
 
-def waitingMenu(game: Encouracados):
+def waitingMenu(game: DesertWar):
     game.playerTanks[game.playerId].name = game.playerName
     screen.fill(AREIA)
     drawText("Esperando outros jogadores (" + str(game.playersConnected) + "/" + str(PLAYERS_QTD) + ")", fontText,BRANCO,PRETO,TELA_LARGURA/2,TELA_ALTURA/2)      
     pg.display.update()
     #pg.time.delay(4000)  
 
-def exitHandling(game: Encouracados):
+def exitHandling(game: DesertWar):
     for event in game.eventList:
         if event.type == pg.QUIT:
             game.inGame = False
@@ -178,12 +186,12 @@ def main():
     appRunning = True
     
     
-    game: Encouracados
+    game: DesertWar
     
     # Loop do jogo
     while appRunning:
         # Instancia um novo jogo    
-        game = Encouracados(-1)
+        game = DesertWar(-1)
         
         n = Network(server)
         while  game.inGame:

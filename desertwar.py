@@ -15,7 +15,7 @@ from globals import *
 
 
 
-class Encouracados(pg.sprite.Sprite):
+class DesertWar(pg.sprite.Sprite):
 
     def __init__(self, id):
         #Inicializando variaveis

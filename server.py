@@ -2,7 +2,7 @@ import sys
 import socket 
 from  _thread import * 
 import pickle
-from encouracados import Encouracados
+from desertwar import Encouracados
 from globals import *
 
 try:
